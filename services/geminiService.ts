@@ -24,7 +24,7 @@ const leadGenerationSchema = {
           },
           personalizedPitch: { 
             type: Type.STRING, 
-            description: "A concise, compelling 2-3 sentence pitch that introduces the web development agency and highlights how it can solve the identified pain point." 
+            description: "A concise, compelling 2-3 sentence pitch that introduces the web development agency and highlights how it can solve the identified pain point. The pitch must always start with 'asncreativeagency'." 
           }
         },
         required: ["businessName", "website", "potentialPainPoint", "personalizedPitch"]
@@ -47,7 +47,7 @@ export const generateLeads = async (
   const ai = new GoogleGenAI({ apiKey: apiKey });
     
   try {
-    const prompt = `Act as an expert B2B lead generation specialist. Your task is to generate a list of ${count} potential clients for a web development agency. The target is "${industry}" located in "${location}". For each lead, provide the required information in the specified JSON format. The pain points should be specific and actionable, and the pitch should be directly tied to solving that pain point.`;
+    const prompt = `Act as an expert B2B lead generation specialist. Your task is to generate a list of ${count} potential clients for a web development agency. The target is "${industry}" located in "${location}". For each lead, provide the required information in the specified JSON format. The pain points should be specific and actionable, and the pitch should be directly tied to solving that pain point. Crucially, every personalized pitch must begin with the agency's name: 'asncreativeagency'.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
