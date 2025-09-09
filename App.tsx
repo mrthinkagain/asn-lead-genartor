@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { LeadCard } from './components/LeadCard';
@@ -7,13 +7,19 @@ import type { Lead } from './types';
 import { ClipboardIcon } from './components/icons/ClipboardIcon';
 import { DownloadIcon } from './components/icons/DownloadIcon';
 
-const EmptyState: React.FC = () => (
+const EmptyState: React.FC<{ apiKeyMissing: boolean }> = ({ apiKeyMissing }) => (
     <div className="text-center p-8">
         <svg className="mx-auto h-16 w-16 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-        <h3 className="mt-2 text-xl font-medium text-white">No Leads Generated</h3>
-        <p className="mt-1 text-sm text-gray-500">Use the settings on the left to generate your first batch of leads.</p>
+        <h3 className="mt-2 text-xl font-medium text-white">
+            {apiKeyMissing ? "API Key Required" : "No Leads Generated"}
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">
+            {apiKeyMissing 
+                ? "Please enter your Gemini API Key in the sidebar to begin." 
+                : "Use the settings on the left to generate your first batch of leads."}
+        </p>
     </div>
 );
 
@@ -29,10 +35,24 @@ const App: React.FC = () => {
     const [industry, setIndustry] = useState<string>('e-commerce stores using Shopify');
     const [location, setLocation] = useState<string>('California, USA');
     const [count, setCount] = useState<number>(5);
+    const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem('gemini_api_key') || '');
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [notification, setNotification] = useState<string>('');
+
+    useEffect(() => {
+        localStorage.setItem('gemini_api_key', apiKey);
+    }, [apiKey]);
+    
+    useEffect(() => {
+        if (!apiKey) {
+            setError("Error: Gemini API Key is not set. Please configure it in the sidebar.");
+        } else {
+            setError(null);
+        }
+    }, [apiKey]);
+
 
     const showNotification = (message: string) => {
         setNotification(message);
@@ -40,6 +60,10 @@ const App: React.FC = () => {
     };
 
     const handleGenerateLeads = useCallback(async () => {
+        if (!apiKey) {
+            setError("Please enter your Gemini API Key in the sidebar.");
+            return;
+        }
         if (!industry || !location) {
             setError("Please fill in both industry and location fields.");
             return;
@@ -48,14 +72,14 @@ const App: React.FC = () => {
         setError(null);
         setLeads([]);
         try {
-            const generated = await generateLeads(industry, location, count);
+            const generated = await generateLeads(industry, location, count, apiKey);
             setLeads(generated);
         } catch (err: any) {
             setError(err.message || "An unknown error occurred.");
         } finally {
             setIsLoading(false);
         }
-    }, [industry, location, count]);
+    }, [industry, location, count, apiKey]);
 
     const exportToCSV = () => {
         if(leads.length === 0) return;
@@ -93,6 +117,7 @@ const App: React.FC = () => {
                 industry={industry} setIndustry={setIndustry}
                 location={location} setLocation={setLocation}
                 count={count} setCount={setCount}
+                apiKey={apiKey} setApiKey={setApiKey}
                 onGenerate={handleGenerateLeads}
                 isLoading={isLoading}
             />
@@ -116,14 +141,14 @@ const App: React.FC = () => {
                     {error && (
                         <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-md relative mb-6" role="alert">
                             <strong className="font-bold">Error: </strong>
-                            <span className="block sm:inline">{error}</span>
+                            <span className="block sm:inline">{error.replace('Error: ', '')}</span>
                         </div>
                     )}
 
                     {isLoading ? (
                         <Loader />
-                    ) : leads.length === 0 ? (
-                        <EmptyState />
+                    ) : leads.length === 0 && !error ? (
+                        <EmptyState apiKeyMissing={!apiKey} />
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             {leads.map((lead, index) => (

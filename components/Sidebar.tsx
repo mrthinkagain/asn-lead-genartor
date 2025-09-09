@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface SidebarProps {
@@ -8,16 +7,42 @@ interface SidebarProps {
   setLocation: (value:string) => void;
   count: number;
   setCount: (value: number) => void;
+  apiKey: string;
+  setApiKey: (value: string) => void;
   onGenerate: () => void;
   isLoading: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   industry, setIndustry, location, setLocation, count, setCount, 
-  onGenerate, isLoading 
+  apiKey, setApiKey, onGenerate, isLoading 
 }) => {
   return (
     <aside className="w-full md:w-96 bg-gray-900 p-6 flex flex-col gap-8 h-full overflow-y-auto">
+      <div>
+        <h2 className="text-xl font-semibold text-white mb-4 border-b-2 border-primary pb-2">API Configuration</h2>
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="apiKey" className="block text-sm font-medium text-gray-300 mb-1">Gemini API Key</label>
+            <input 
+              type="password" 
+              id="apiKey"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="Enter your API key" 
+              className="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-2 focus:ring-primary-focus focus:border-primary-focus transition"
+              aria-label="Gemini API Key"
+            />
+             <p className="text-xs text-gray-500 mt-1">
+                Get your key from{' '}
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary-focus underline">
+                  Google AI Studio
+                </a>.
+              </p>
+          </div>
+        </div>
+      </div>
+
       <div>
         <h2 className="text-xl font-semibold text-white mb-4 border-b-2 border-primary pb-2">Generation Settings</h2>
         <div className="space-y-4">
@@ -60,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       
       <button 
         onClick={onGenerate}
-        disabled={isLoading || !industry || !location}
+        disabled={isLoading || !industry || !location || !apiKey}
         className="w-full bg-primary hover:bg-primary-focus text-primary-content font-bold py-3 px-4 rounded-md transition-all duration-300 disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {isLoading ? (

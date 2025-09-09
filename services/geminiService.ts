@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Lead, LeadsResponse } from '../types';
 
@@ -38,13 +37,14 @@ const leadGenerationSchema = {
 export const generateLeads = async (
   industry: string, 
   location: string, 
-  count: number
+  count: number,
+  apiKey: string
 ): Promise<Lead[]> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable is not set. Please configure it in your deployment settings.");
+  if (!apiKey) {
+    throw new Error("Gemini API Key is missing. Please add it in the sidebar configuration.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
     
   try {
     const prompt = `Act as an expert B2B lead generation specialist. Your task is to generate a list of ${count} potential clients for a web development agency. The target is "${industry}" located in "${location}". For each lead, provide the required information in the specified JSON format. The pain points should be specific and actionable, and the pitch should be directly tied to solving that pain point.`;
@@ -71,6 +71,10 @@ export const generateLeads = async (
   } catch (error) {
     console.error("Error generating leads:", error);
     if (error instanceof Error) {
+        // Check for specific API key related errors from the service
+        if (error.message.includes('API key not valid')) {
+             throw new Error('The provided Gemini API Key is invalid. Please check and try again.');
+        }
         throw new Error(`Failed to generate leads: ${error.message}`);
     }
     throw new Error("An unknown error occurred while generating leads.");
